@@ -24,6 +24,8 @@
         .result-box {
             background: linear-gradient(135deg, #ede9fe, #f5f3ff);
             border: 2px solid #c4b5fd;
+            position: relative;
+            overflow: hidden;
         }
         .bacs-box {
             background: linear-gradient(to right, #3b82f6 0%, #60a5fa 25%, #f87171 75%, #ef4444 100%);
@@ -54,29 +56,46 @@
         #stockChartContainer {
             height: 220px;
         }
-        /* Style tableau Exemples CODIR */
+
+        /* Tableau CODIR */
         .codir-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.95rem;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         .codir-table th, .codir-table td {
-            border: 1px solid #d1d5db;
-            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            padding: 11px 14px;
             text-align: center;
         }
         .codir-table th {
-            background-color: #f3f4f6;
+            background-color: #7c3aed;
+            color: white;
             font-weight: 600;
-            color: #1f2937;
         }
         .codir-table td:first-child {
             text-align: left;
-            font-weight: 500;
-            background-color: #f9fafb;
+            font-weight: 600;
+            background-color: #f5f3ff;
+            color: #4c1d95;
         }
         .codir-table tr:nth-child(even) td:not(:first-child) {
-            background-color: #fafafa;
+            background-color: #faf5ff;
+        }
+
+        /* Zone tableau qui s’affiche à droite */
+        #codirPanel {
+            display: none;
+        }
+        #codirPanel.active {
+            display: block;
+        }
+        #resultatsContent.hidden {
+            display: none;
         }
     </style>
 </head>
@@ -106,9 +125,9 @@
                 </p>
             </div>
 
-            <!-- BOUTON EXEMPLES CODIR (coin supérieur droit) -->
+            <!-- BOUTON EXEMPLES CODIR -->
             <div>
-                <button onclick="showCodir()" 
+                <button onclick="toggleCodir()" 
                         class="btn-codir flex items-center gap-2 px-5 py-3 rounded-2xl shadow-md font-medium transition">
                     <i class="fas fa-table"></i>
                     Exemples CODIR
@@ -161,57 +180,111 @@
                 </button>
             </div>
 
-            <!-- RÉSULTATS -->
+            <!-- RÉSULTATS / TABLEAU CODIR -->
             <div class="result-box p-8 rounded-3xl shadow-xl">
-                <h2 class="text-2xl font-semibold mb-7 text-violet-900 flex items-center justify-center gap-3">
-                    <i class="fas fa-chart-pie text-violet-700"></i>
-                    Résultats de Simulation
-                </h2>
-                <div class="grid grid-cols-2 gap-5">
-                    <!-- E -->
-                    <div class="relative bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-violet-200 text-center">
-                        <span class="absolute -top-4 -left-2 text-5xl font-black text-black leading-none select-none">E</span>
-                        <p class="text-violet-800 text-sm font-medium mb-2 leading-tight">
-                            Taille du lot de réapprovisionnement
-                        </p>
-                        <p id="E" class="text-4xl font-bold text-violet-700 tracking-tight">—</p>
+                
+                <!-- CONTENU NORMAL DES RÉSULTATS -->
+                <div id="resultatsContent">
+                    <h2 class="text-2xl font-semibold mb-7 text-violet-900 flex items-center justify-center gap-3">
+                        <i class="fas fa-chart-pie text-violet-700"></i>
+                        Résultats de Simulation
+                    </h2>
+                    <div class="grid grid-cols-2 gap-5">
+                        <div class="relative bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-violet-200 text-center">
+                            <span class="absolute -top-4 -left-2 text-5xl font-black text-black leading-none select-none">E</span>
+                            <p class="text-violet-800 text-sm font-medium mb-2 leading-tight">
+                                Taille du lot de réapprovisionnement
+                            </p>
+                            <p id="E" class="text-4xl font-bold text-violet-700 tracking-tight">—</p>
+                        </div>
+                        <div class="relative bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-violet-200 text-center">
+                            <span class="absolute -top-4 -left-2 text-5xl font-black text-black leading-none select-none">e</span>
+                            <p class="text-violet-800 text-sm font-medium mb-2 leading-tight">
+                                Seuil de déclenchement de commande
+                            </p>
+                            <p id="e" class="text-4xl font-bold text-violet-700 tracking-tight">—</p>
+                        </div>
+                        <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-violet-200 text-center">
+                            <p class="text-violet-800 text-sm font-medium mb-2 leading-tight">Coefficient multiplicateur (Nb des boites)</p>
+                            <p id="coef" class="text-4xl font-bold text-violet-700 tracking-tight">—</p>
+                        </div>
+                        <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-violet-200 text-center">
+                            <p class="text-violet-800 text-sm font-medium mb-2 leading-tight">Jours entre deux réapprovisionnements</p>
+                            <p id="intervalle" class="text-4xl font-bold text-violet-700 tracking-tight">—</p>
+                        </div>
                     </div>
-                    <!-- e -->
-                    <div class="relative bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-violet-200 text-center">
-                        <span class="absolute -top-4 -left-2 text-5xl font-black text-black leading-none select-none">e</span>
-                        <p class="text-violet-800 text-sm font-medium mb-2 leading-tight">
-                            Seuil de déclenchement de commande
-                        </p>
-                        <p id="e" class="text-4xl font-bold text-violet-700 tracking-tight">—</p>
-                    </div>
-                    <!-- Coef -->
-                    <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-violet-200 text-center">
-                        <p class="text-violet-800 text-sm font-medium mb-2 leading-tight">Coefficient multiplicateur (Nb des boites)</p>
-                        <p id="coef" class="text-4xl font-bold text-violet-700 tracking-tight">—</p>
-                    </div>
-                    <!-- Intervalle -->
-                    <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-violet-200 text-center">
-                        <p class="text-violet-800 text-sm font-medium mb-2 leading-tight">Jours entre deux réapprovisionnements</p>
-                        <p id="intervalle" class="text-4xl font-bold text-violet-700 tracking-tight">—</p>
+                    <div class="mt-6 text-center">
+                        <p class="text-violet-800 text-sm font-medium mb-2">Commentaire</p>
+                        <div id="commentaire" class="bg-white/60 border border-violet-200 p-4 rounded-2xl min-h-[60px] text-sm leading-relaxed text-violet-900"></div>
                     </div>
                 </div>
-                <div class="mt-6 text-center">
-                    <p class="text-violet-800 text-sm font-medium mb-2">Commentaire</p>
-                    <div id="commentaire" class="bg-white/60 border border-violet-200 p-4 rounded-2xl min-h-[60px] text-sm leading-relaxed text-violet-900"></div>
+
+                <!-- TABLEAU CODIR (s’affiche à la place des résultats) -->
+                <div id="codirPanel">
+                    <div class="flex items-center justify-between mb-5">
+                        <h2 class="text-xl font-semibold text-violet-900 flex items-center gap-2">
+                            <i class="fas fa-table text-violet-700"></i>
+                            Exemples CODIR
+                        </h2>
+                        <button onclick="toggleCodir()" 
+                                class="bg-violet-100 hover:bg-violet-200 text-violet-800 px-4 py-2 rounded-xl text-sm font-medium transition">
+                            Fermer le tableau
+                        </button>
+                    </div>
+
+                    <table class="codir-table">
+                        <thead>
+                            <tr>
+                                <th>ATELIER</th>
+                                <th>REM</th>
+                                <th>CVS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CODE ART</td>
+                                <td>74424508</td>
+                                <td>01894884</td>
+                            </tr>
+                            <tr>
+                                <td>UDI</td>
+                                <td>25</td>
+                                <td>1000</td>
+                            </tr>
+                            <tr>
+                                <td>DELAIS REAPP</td>
+                                <td>85</td>
+                                <td>2</td>
+                            </tr>
+                            <tr>
+                                <td>CONSOMMATION / J</td>
+                                <td>5</td>
+                                <td>300</td>
+                            </tr>
+                            <tr>
+                                <td>E (erp)</td>
+                                <td>100</td>
+                                <td>1000</td>
+                            </tr>
+                            <tr>
+                                <td>e (erp)</td>
+                                <td>40</td>
+                                <td>400</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- ========== BOX DES BACS (PLEINE LARGEUR) ========== -->
+        <!-- ========== BOX DES BACS ========== -->
         <div class="mt-8 bacs-box p-8 rounded-3xl shadow-xl text-white">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <!-- GAUCHE (BLEU) -->
                 <div class="text-center md:text-left">
                     <p class="text-blue-100 text-sm font-medium mb-2">Quantité dans le bac bleu</p>
                     <p id="bacBleu" class="text-5xl font-bold tracking-tight">—</p>
                     <p class="text-blue-200 text-sm mt-1">= Taille du lot − Seuil</p>
                 </div>
-                <!-- DROITE (ROUGE) -->
                 <div class="text-center md:text-right">
                     <p class="text-red-100 text-sm font-medium mb-2">Quantité dans le bac rouge</p>
                     <p id="bacRouge" class="text-5xl font-bold tracking-tight">—</p>
@@ -287,64 +360,9 @@
         </div>
     </div>
 
-    <!-- MODAL EXEMPLES CODIR -->
-    <div id="codirModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-        <div class="modal bg-white rounded-3xl max-w-2xl w-full mx-4 shadow-2xl">
-            <div class="bg-violet-600 text-white px-6 py-4 flex items-center justify-between rounded-t-3xl">
-                <h3 class="text-xl font-semibold">📋 Exemples CODIR</h3>
-                <button onclick="hideCodir()" class="text-3xl leading-none hover:text-gray-200">×</button>
-            </div>
-            <div class="p-6 overflow-x-auto">
-                <table class="codir-table">
-                    <thead>
-                        <tr>
-                            <th>ATELIER</th>
-                            <th>REM</th>
-                            <th>CVS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>CODE ART</td>
-                            <td>74424508</td>
-                            <td>01894884</td>
-                        </tr>
-                        <tr>
-                            <td>UDI</td>
-                            <td>25</td>
-                            <td>1000</td>
-                        </tr>
-                        <tr>
-                            <td>DELAIS REAPP</td>
-                            <td>85</td>
-                            <td>2</td>
-                        </tr>
-                        <tr>
-                            <td>CONSOMMATION / J</td>
-                            <td>5</td>
-                            <td>300</td>
-                        </tr>
-                        <tr>
-                            <td>E (erp)</td>
-                            <td>100</td>
-                            <td>1000</td>
-                        </tr>
-                        <tr>
-                            <td>e (erp)</td>
-                            <td>40</td>
-                            <td>400</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="p-5 border-t flex justify-center">
-                <button onclick="hideCodir()" class="bg-violet-100 hover:bg-violet-200 text-violet-800 px-10 py-3 rounded-2xl font-medium transition">Fermer</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         let stockChart = null;
+        let codirVisible = false;
 
         function syncKE(input) {
             const keJour = document.getElementById('ke_jour');
@@ -444,6 +462,9 @@
         }
 
         function lancerSimulation() {
+            // Si le tableau CODIR est affiché, on le ferme d’abord
+            if (codirVisible) toggleCodir();
+
             let keJour = parseFloat(document.getElementById('ke_jour').value) || 0;
             const udi = parseFloat(document.getElementById('udi').value) || 0;
             const delai = parseFloat(document.getElementById('delai').value) || 0;
@@ -458,7 +479,6 @@
             document.getElementById('intervalle').textContent = res.Intervalle + " jours";
             document.getElementById('commentaire').textContent = 
                 'Commande de ' + res.E + ' pièces tous les ' + res.Intervalle + ' jours (coef ' + res.Coef + ')';
-            // Valeurs inversées
             document.getElementById('bacBleu').textContent = res.E - res.e;
             document.getElementById('bacRouge').textContent = res.e;
             document.getElementById('simulation_text').innerHTML = genererSimulationText(res.E, keJour, res.e);
@@ -478,12 +498,20 @@
             document.getElementById('sourceModal').classList.add('hidden');
         }
 
-        // Nouvelles fonctions pour le modal Exemples CODIR
-        function showCodir() {
-            document.getElementById('codirModal').classList.remove('hidden');
-        }
-        function hideCodir() {
-            document.getElementById('codirModal').classList.add('hidden');
+        // Affiche / masque le tableau CODIR dans le panneau de droite
+        function toggleCodir() {
+            const panel = document.getElementById('codirPanel');
+            const resultats = document.getElementById('resultatsContent');
+
+            codirVisible = !codirVisible;
+
+            if (codirVisible) {
+                panel.classList.add('active');
+                resultats.classList.add('hidden');
+            } else {
+                panel.classList.remove('active');
+                resultats.classList.remove('hidden');
+            }
         }
 
         window.onload = function() {};
